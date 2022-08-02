@@ -9,7 +9,7 @@ import {
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client";
 // import { getme, deleteBook } from "../utils/Api";
-import { GET_ME } from "../utils/API";
+import { GET_ME } from "../utils/queries";
 import Auth from "../utils/auth";
 import { removeBookId } from "../utils/localStorage";
 import { REMOVE_BOOK } from "../utils/mutations";
