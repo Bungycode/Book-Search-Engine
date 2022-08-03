@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Jumbotron,
   Container,
@@ -6,26 +6,26 @@ import {
   Card,
   Button,
 } from "react-bootstrap";
-import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client";
-// import { getme, deleteBook } from "../utils/Api";
 import { GET_ME } from "../utils/queries";
 import Auth from "../utils/auth";
 import { removeBookId } from "../utils/localStorage";
 import { REMOVE_BOOK } from "../utils/mutations";
 
 const SavedBooks = () => {
-  // const [userData, setUserData] = useState({});
+  let userDataLength = null;
+  const [userData, setUserData] = useState("");
+  const [removeBook, { error }] = useMutation(REMOVE_BOOK);
+  const { loading, data } = useQuery(GET_ME);
+  // setUserData(data);
 
-  const { _id, username } = useParams();
-
-  const { loading, userData, setUserData } = useQuery(GET_ME, {
-    variables: { _id: _id, username: username },
-  });
+  // Supposed to use this instead of Auth.getProfile??
+  // const { _id, username } = useParams();
 
   // use this to determine if `useEffect()` hook needs to run again
-  const userDataLength = Object.keys(userData).length;
-  const [removeBook, { error }] = useMutation(REMOVE_BOOK);
+  if (data) {
+    userDataLength = 1;
+  }
 
   // useEffect(() => {
   //   const getUserData = async () => {
@@ -36,14 +36,16 @@ const SavedBooks = () => {
   //         return false;
   //       }
 
-  //       const response = await getMe(token);
+  //       const user = Auth.getProfile();
+
+  //       const response = await me(user.data.username, user.data._id);
 
   //       if (!response.ok) {
   //         throw new Error("something went wrong!");
   //       }
 
-  //       const user = await response.json();
-  //       setUserData(user);
+  //       // const user = await response.json();
+  //       setUserData(response);
   //     } catch (err) {
   //       console.error(err);
   //     }
@@ -61,14 +63,13 @@ const SavedBooks = () => {
     }
 
     try {
-      const response = await removeBook({ variables: { bookId, token } });
+      const response = await removeBook({ variables: { bookId } });
 
-      if (!response.ok) {
+      if (!response.data) {
         throw new Error("something went wrong!");
       }
 
-      const updatedUser = await response.json();
-      setUserData(updatedUser);
+      setUserData(response);
       // upon success, remove book's id from localStorage
       removeBookId(bookId);
     } catch (err) {
@@ -90,14 +91,14 @@ const SavedBooks = () => {
       </Jumbotron>
       <Container>
         <h2>
-          {userData.savedBooks.length
-            ? `Viewing ${userData.savedBooks.length} saved ${
-                userData.savedBooks.length === 1 ? "book" : "books"
+          {data.me.savedBooks.length
+            ? `Viewing ${data.me.savedBooks.length} saved ${
+                data.me.savedBooks.length === 1 ? "book" : "books"
               }:`
             : "You have no saved books!"}
         </h2>
         <CardColumns>
-          {userData.savedBooks.map((book) => {
+          {data.me.savedBooks.map((book) => {
             return (
               <Card key={book.bookId} border="dark">
                 {book.image ? (

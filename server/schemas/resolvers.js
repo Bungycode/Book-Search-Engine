@@ -3,13 +3,9 @@ const { signToken } = require("../utils/auth");
 
 const resolvers = {
   Query: {
-    me: async (parent, { user = null, params }, context) => {
-      console.log(context);
+    me: async (parent, args, context) => {
       return User.findOne({
-        $or: [
-          { _id: context.user ? context.user._id : params.id },
-          { username: params.username },
-        ],
+        $or: [{ _id: context.user._id }, { username: context.user.username }],
       });
     },
   },
@@ -29,7 +25,7 @@ const resolvers = {
       if (!user) {
         return "Can't find this user";
       }
-      
+
       const correctPw = await user.isCorrectPassword(password);
 
       if (!correctPw) {
@@ -38,23 +34,25 @@ const resolvers = {
       const token = signToken(user);
       return { token, user };
     },
-    saveBook: async (parent, { bookToSave, userId }, context) => {
+    saveBook: async (parent, { bookToSave }, context) => {
       const updatedUser = await User.findOneAndUpdate(
-        { _id: userId },
+        { _id: context.user._id },
         { $addToSet: { savedBooks: bookToSave } },
         { new: true, runValidators: true }
       );
       return updatedUser;
     },
-    deleteBook: async (parent, { user, savedBooks }, context) => {
+    deleteBook: async (parent, { bookId }, context) => {
       const updatedUser = await User.findOneAndUpdate(
-        { _id: user._id },
-        { $pull: { savedBooks: { bookId: savedBooks.bookId } } },
+        { _id: context.user._id },
+        { $pull: { savedBooks: { bookId: bookId } } },
         { new: true }
       );
+
       if (!updatedUser) {
         return "Couldn't find user with this id!";
       }
+
       return updatedUser;
     },
   },
